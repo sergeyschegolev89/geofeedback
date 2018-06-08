@@ -53,7 +53,7 @@ function main() {
 function initClusterer() {
     let customItemContentLayout = ymaps.templateLayoutFactory.createClass(
         '<h2 class=ballonPlace>{{ properties.balloonPlace|raw }}</h2>' +
-        '<a href="#" class="balloonAddress" >{{ properties.balloonAddress|raw }}</a></br></br>' +
+        '<a href="#" class="balloonAddress" coords="{{ properties.balloonCoords|raw }}">{{ properties.balloonAddress|raw }}</a></br></br>' +
         '<div class=ballonReview>{{ properties.balloonReview|raw }}</div>' +
         '<div class=ballonDate>{{ properties.balloonDate|raw }}</div>'
     );
@@ -70,8 +70,8 @@ function initClusterer() {
     myMap.geoObjects.add(clusterer);
 }
 function showForm(address) {
-    if (storage[address]) {
-        getReviews(address);
+    if (storage[coords]) {
+        getReviews(coords);
     } else {
         reviewList.innerHTML = 'Отзывов пока нет';
     }
@@ -105,16 +105,17 @@ function addReview() {
             reviewList.innerHTML = '';
         }
         reviewList.appendChild(item);
-        if (!storage[address]) {
-            storage[address] = [];
+        if (!storage[coords]) {
+            storage[coords] = [];
         }
-        storage[address].push(data);
+        storage[coords].push(data);
         localStorage.reviews = JSON.stringify(storage);
         clearForm();
     }
 }
 function addPlacemark(data) {
     let placemark = new ymaps.Placemark(data.coords, {
+        balloonCoords: data.coords,
         balloonPlace: data.place,
         balloonAddress: data.address,
         balloonReview: data.text,
@@ -171,13 +172,14 @@ function createItem(data) {
 function getForm(e) {
     if (e.target.className === 'balloonAddress') {
         pagePixels = [e.pageX, e.pageY];
+        coords = e.target.coords;
         showForm(e.target.innerText);
     }
 }
-function getReviews(address) {
+function getReviews() {
     let list = document.createDocumentFragment();
 
-    storage[address].forEach((data) => {
+    storage[coords].forEach((data) => {
         let item = createItem(data);
 
         list.appendChild(item);
@@ -187,9 +189,9 @@ function getReviews(address) {
 }
 function getAllReviews() {
     storage = JSON.parse(localStorage.reviews);
-    for (let addr in storage) {
-        if (storage.hasOwnProperty(addr)) {
-            storage[addr].forEach(data => addPlacemark(data));
+    for (let key in storage) {
+        if (storage.hasOwnProperty(key)) {
+            storage[key].forEach(data => addPlacemark(data));
         }
     }
 }
